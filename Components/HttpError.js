@@ -19,7 +19,7 @@ class ValidationError extends Error {
 class ObjectNotFound extends Error {
   constructor(message) {
     super(message);
-    this.name = "ObjectNotFound";
+    this.name = "ObjectIdIsNotFound";
     this.status = NOT_FOUND;
   }
 }
@@ -33,7 +33,8 @@ class ServerError extends Error {
 }
 
 module.exports = {
-  ValidationError
+  ValidationError,
+  ObjectNotFound
 };
 
 //`Переданы некорректные данные. ${errors._message}`

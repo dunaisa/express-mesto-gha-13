@@ -1,5 +1,5 @@
 const Card = require('../models/card');
-//import { ValidationError, ObjectNotFound, ServerError } from '../Components/HttpError';
+const { ValidationError } = require('../Components/HttpError');
 
 //Возвращает все карточки
 const getCards = (req, res) => {
@@ -11,17 +11,16 @@ const getCards = (req, res) => {
 //Создает карточку
 const createCard = (req, res) => {
   const { name, link } = req.body;
-
-  Card.create({ name, link })
+  const { _id } = req.user;
+  Card.create({ name, link, owner: _id })
     .then(card => res.send({ data: card }))
-    .catch(console.dir)
-  // .catch(() => {
-
-  //   if (err.name === 'ValidationError') {
-  //     const ValidationError = new ValidationError(`Данные заполнены некорректно. ${err}`)
-  //     return res.status(ValidationError.status).send(ValidationError.message)
-  //   }
-  // });
+    .catch((errors) => {
+      if (errors.name === 'ValidationError') {
+        const IncorrectInputValue = new ValidationError('Переданы некорректные данные.')
+        return res.status(IncorrectInputValue.status).send({ message: IncorrectInputValue.message })
+      }
+    })
+    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
 };
 
 //res.status(500).send({ message: 'Произошла ошибка' })
@@ -46,7 +45,7 @@ const likeCard = (req, res) => {
 };
 
 //Убрать лайк с карточки
-const deleteLikeCard = (req, res) => {
+const dislikeCard = (req, res) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     // убрать _id из массива
@@ -62,5 +61,5 @@ module.exports = {
   createCard,
   deleteCard,
   likeCard,
-  deleteLikeCard
+  dislikeCard
 };
