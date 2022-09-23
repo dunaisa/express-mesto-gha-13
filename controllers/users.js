@@ -1,5 +1,5 @@
 const User = require('../models/user');
-const { ValidationError, ObjectNotFound } = require('../Components/HttpError');
+const { ValidationError, ObjectNotFound, ServerError } = require('../Components/HttpError');
 
 //Возвращает всех пользователей
 const getUsers = (req, res) => {
@@ -16,11 +16,13 @@ const createUser = (req, res) => {
     .then(user => res.send({ data: user }))
     .catch((errors) => {
       if (errors.name === 'ValidationError') {
+        //400
         const IncorrectInputValue = new ValidationError('Переданы некорректные данные.')
         return res.status(IncorrectInputValue.status).send({ message: IncorrectInputValue.message })
+      } else {
+        return res.status(500).send({ message: 'Произошла ошибка' });
       }
     })
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
 };
 
 //Возвращает пользователя по id
@@ -32,21 +34,22 @@ const findUser = (req, res) => {
         console.log(req.params.userId)
         const UserNotFound = new ObjectNotFound('Пользователь не найден.')
         return res.status(UserNotFound.status).send({ message: UserNotFound.message })
+      } else {
+        return res.status(500).send({ message: 'Произошла ошибка' })
       }
     })
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
 };
 
 //Обновляет профиль
 const updateUserInfo = (req, res) => {
   const { name, about } = req.body;
-  const { _id } = req.user;
 
-  User.findByIdAndUpdate(req.params.userId, { name, about }, { new: true, runValidators: true })
+  User.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
+    .orFail(new ObjectNotFound('Пользователь не найден.'))
     .then(user => res.send({ data: user }))
     .catch((errors) => {
-      console.dir(errors)
-      if (errors.name === 'ObjectIdIsNotFound' && errors.errorCode === 404) {
+      if (errors.name === 'ObjectIdIsNotFound') {
+
         const UserNotFound = new ObjectNotFound('Пользователь не найден.')
         return res.status(UserNotFound.status).send({ message: UserNotFound.message })
 
@@ -55,24 +58,11 @@ const updateUserInfo = (req, res) => {
         return res.status(IncorrectInputValue.status).send({ message: IncorrectInputValue.message })
 
       } else {
-        return res.status(500).send({ message: 'Произошла ошибка' });
+        const ServerErr = new ServerError('Произошла ошибка.')
+        return res.status(ServerErr.status).send({ message: 'Произошла ошибка' });
       }
     })
 };
-
-// .catch ((errors) => {
-//   console.dir(errors)
-//   if (errors.name === 'ValidationError') {
-//     //400
-//     const IncorrectInputValue = new ValidationError('Переданы некорректные данные.')
-//     return res.status(IncorrectInputValue.status).send({ message: IncorrectInputValue.message })
-//   } else if (errors.name === 'Cast to ObjectId failed') {
-//     //404
-//     const UserNotFound = new ObjectNotFound('Пользователь не найден.')
-//     return res.status(UserNotFound.status).send({ message: UserNotFound.message })
-//   }
-// })
-//     .catch (() => res.status(500).send({ message: 'Произошла ошибка' }));
 
 //Обновляет аватар
 const updateUserAvatar = (req, res) => {

@@ -2,12 +2,6 @@ const BAD_REQUEST = 400;
 const NOT_FOUND = 404;
 const SERVER_ERROR = 500;
 
-// class Error {
-//   constructor(message) {
-//     this.message = message;
-//   }
-// }
-
 class ValidationError extends Error {
   constructor(message) {
     super(message);
@@ -34,7 +28,8 @@ class ServerError extends Error {
 
 module.exports = {
   ValidationError,
-  ObjectNotFound
+  ObjectNotFound,
+  ServerError
 };
 
 //`Переданы некорректные данные. ${errors._message}`
