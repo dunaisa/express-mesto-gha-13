@@ -68,7 +68,7 @@ const likeCard = (req, res) => {
         return res.status(IncorrectInputValue.status).send({ message: IncorrectInputValue.message })
 
       } else if (errors.name === 'CastError') {
-        const UserIdNotValid = new ValidationError(`${req.user._id} не является валидным идентификатором пользователя.`)
+        const UserIdNotValid = new ValidationError(`${req.params.cardId} не является валидным идентификатором карточки.`)
         return res.status(UserIdNotValid.status).send({ message: UserIdNotValid.message })
       } else {
         const ServerErr = new ServerError('Произошла ошибка.')
@@ -97,7 +97,7 @@ const dislikeCard = (req, res) => {
         return res.status(IncorrectInputValue.status).send({ message: IncorrectInputValue.message })
 
       } else if (errors.name === 'CastError') {
-        const UserIdNotValid = new ValidationError(`${req.user._id} не является валидным идентификатором пользователя.`)
+        const UserIdNotValid = new ValidationError(`${req.params.cardId} не является валидным идентификатором пользователя.`)
         return res.status(UserIdNotValid.status).send({ message: UserIdNotValid.message })
       } else {
         const ServerErr = new ServerError('Произошла ошибка.')
