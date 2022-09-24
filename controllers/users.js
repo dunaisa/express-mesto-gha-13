@@ -5,7 +5,10 @@ const { ValidationError, ObjectNotFound, ServerError } = require('../Components/
 const getUsers = (req, res) => {
   User.find({})
     .then(users => res.send({ data: users }))
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .catch(() => {
+      const ServerErr = new ServerError('Произошла ошибка.')
+      return res.status(ServerErr.status).send({ message: 'Произошла ошибка' });
+    });
 };
 
 //Создает пользователя
@@ -16,11 +19,12 @@ const createUser = (req, res) => {
     .then(user => res.send({ data: user }))
     .catch((errors) => {
       if (errors.name === 'ValidationError') {
-        //400
+
         const IncorrectInputValue = new ValidationError('Переданы некорректные данные.')
         return res.status(IncorrectInputValue.status).send({ message: IncorrectInputValue.message })
       } else {
-        return res.status(500).send({ message: 'Произошла ошибка' });
+        const ServerErr = new ServerError('Произошла ошибка.')
+        return res.status(ServerErr.status).send({ message: 'Произошла ошибка' });
       }
     })
 };
@@ -35,7 +39,8 @@ const findUser = (req, res) => {
         const UserNotFound = new ObjectNotFound('Пользователь не найден.')
         return res.status(UserNotFound.status).send({ message: UserNotFound.message })
       } else {
-        return res.status(500).send({ message: 'Произошла ошибка' })
+        const ServerErr = new ServerError('Произошла ошибка.')
+        return res.status(ServerErr.status).send({ message: 'Произошла ошибка' });
       }
     })
 };
@@ -60,7 +65,6 @@ const updateUserInfo = (req, res) => {
         const UserIdNotValid = new ValidationError(`${req.user._id} не является валидным идентификатором пользователя.`)
         return res.status(UserIdNotValid.status).send({ message: UserIdNotValid.message })
       } else {
-        console.dir(errors)
         const ServerErr = new ServerError('Произошла ошибка.')
         return res.status(ServerErr.status).send({ message: 'Произошла ошибка' });
       }
@@ -70,15 +74,26 @@ const updateUserInfo = (req, res) => {
 //Обновляет аватар
 const updateUserAvatar = (req, res) => {
   const { avatar } = req.body;
-  User.findByIdAndUpdate(req.params.userId, { avatar }, { new: true, runValidators: true })
+  User.findByIdAndUpdate(req.user._id, { avatar }, { new: true, runValidators: true })
+    .orFail(new ObjectNotFound('Пользователь не найден.'))
     .then(user => res.send({ data: user }))
     .catch((errors) => {
-      if (!avatar) {
-        const IncorrectInputValue = new ValidationError('Переданы некорректные данные.');
+      if (errors.name === 'ObjectIdIsNotFound') {
+        const UserNotFound = new ObjectNotFound('Пользователь не найден.')
+        return res.status(UserNotFound.status).send({ message: UserNotFound.message })
+
+      } else if (errors.name === 'ValidationError') {
+        const IncorrectInputValue = new ValidationError(`Переданы некорректные данные.`)
         return res.status(IncorrectInputValue.status).send({ message: IncorrectInputValue.message })
+
+      } else if (errors.name === 'CastError') {
+        const UserIdNotValid = new ValidationError(`${req.user._id} не является валидным идентификатором пользователя.`)
+        return res.status(UserIdNotValid.status).send({ message: UserIdNotValid.message })
+      } else {
+        const ServerErr = new ServerError('Произошла ошибка.')
+        return res.status(ServerErr.status).send({ message: 'Произошла ошибка' });
       }
     })
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
 };
 
 module.exports = {
